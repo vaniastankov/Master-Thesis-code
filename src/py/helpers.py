@@ -21,9 +21,9 @@ def plot_waveform(y, sr, label=None):
         fig.set_tight_layout({"pad": .25})
         plt.xlabel('Time (seconds)')
         plt.ylabel('Amplitude')
+        fig.savefig(plot_directory+f"Waveform {label}.png", format="png", dpi=dpi)
         plt.title(label + " Waveform")
         fig.savefig(buf, format="png", dpi=dpi)
-        fig.savefig(plot_directory+f"Waveform {label}.png", format="png", dpi=dpi)
     plt.close()
     buf.seek(0)
     img_arr = np.frombuffer(buf.getvalue(), dtype=np.uint8)
@@ -47,7 +47,6 @@ def build_spec(y, sr, mode="mel", num_filters=128, db=('auto', 'auto'), flim=('a
     dpi = 56 if label == None else 256  # Image size varies depending on use, models use 224x224 images, but to view in a notebook, bigger images are needed
     # dpi = 56 if label == None else 56 * 3  # Image size varies depending on use, models use 224x224 images, but to view in a notebook, bigger images are needed
     fig, ax = plt.subplots(figsize=(4 if label == None else 5, 4), dpi=dpi)
-    ax.axis('off')
     fmin = 0 if flim[0] == 'auto' else flim[0]
     fmax = sr/2 if flim[1] == 'auto' else flim[1]
     dbmin = -100 if db[0] == 'auto' else db[0]
@@ -69,11 +68,14 @@ def build_spec(y, sr, mode="mel", num_filters=128, db=('auto', 'auto'), flim=('a
     prefix = " Mel" if mode == "mel" else " Log STFT"
     buf = io.BytesIO()
     if label == None:
+        ax.axis('off')
         img.colorbar.remove()
         fig.tight_layout(pad=0)
         fig.savefig(buf, format="png", dpi=dpi,
                     pad_inches=0, bbox_inches='tight')
     else:
+        plt.xlabel('Time (seconds)')
+        plt.ylabel('Frequency')
         fig.set_tight_layout({"pad": .25})
         fig.savefig(plot_directory+f"{label}.png",
                     format="png", dpi=dpi, bbox_inches='tight')
@@ -290,15 +292,15 @@ def build_confusion_matrix(df, name, prefix = ""):
 
 bp_names_lookup = {
     'dist': 'Distortion',
-    'mixup': 'Mixup',
-    'imixup': 'iMixup',
-    'room': 'Room',
-    'warp': 'Warp',
+    'mixup': 'Audio Mixup',
+    'imixup': 'Im. Mixup',
+    'room': 'Room Sim.',
+    'warp': 'Im. Warping',
     'delay': 'Delay',
     'spectrum': 'Original Only',
-    'image_only': 'Image Comb.',
+    'image_only': 'Im. Comb.',
     'audio_only': 'Audio Comb.',
-    'audio_only_nd': 'Audio (No Delay)',
+    'audio_only_nd': 'Audio w/o Delay',
     'all': 'All Comb.'
 }
 
@@ -348,3 +350,19 @@ def build_boxplot(df, names=[], label=''):
     img = cv2.imdecode(img_arr, 1)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     return img
+
+
+def summarize_table_to_latex(df, name):
+    t = df.copy()
+    t = t[['spectrum','dist','mixup','room','delay','audio_only','audio_only_nd','imixup','warp','image_only', 'all']]
+    mean = t.mean()
+    median = t.median()
+    std = t.std()
+    t = t.append(mean, ignore_index=True)
+    t = t.append(median, ignore_index=True)
+    t = t.append(std, ignore_index=True)
+    t.rename(columns=bp_names_lookup, inplace=True)
+    lt = t.to_latex(index=True, float_format="%.2f")
+    with open("../Data/"+name+"_table.txt" ,'w') as f:
+        f.write(lt)
+
