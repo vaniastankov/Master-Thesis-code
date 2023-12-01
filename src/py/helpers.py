@@ -44,7 +44,7 @@ def build_spec(y, sr, mode="mel", num_filters=128, db=('auto', 'auto'), flim=('a
         flim - the frequency range to use for the spectrogram
         label - the label of the spectrogram. If None, the spectrogram is returned as an image array, if exists, the spectrogram is saved in the plot directory
     """
-    dpi = 56 if label == None else 256  # Image size varies depending on use, models use 224x224 images, but to view in a notebook, bigger images are needed
+    dpi = 56 if label == None else 512  # Image size varies depending on use, models use 224x224 images, but to view in a notebook, bigger images are needed
     # dpi = 56 if label == None else 56 * 3  # Image size varies depending on use, models use 224x224 images, but to view in a notebook, bigger images are needed
     fig, ax = plt.subplots(figsize=(4 if label == None else 5, 4), dpi=dpi)
     fmin = 0 if flim[0] == 'auto' else flim[0]
@@ -292,15 +292,15 @@ def build_confusion_matrix(df, name, prefix = ""):
 
 bp_names_lookup = {
     'dist': 'Distortion',
-    'mixup': 'Audio Mixup',
-    'imixup': 'Im. Mixup',
-    'room': 'Room Sim.',
-    'warp': 'Im. Warping',
+    'mixup': 'Audio\nMixup',
+    'imixup': 'Image\nMixup',
+    'room': 'Room\nSim.',
+    'warp': 'Image\nWarping',
     'delay': 'Delay',
-    'spectrum': 'Original Only',
-    'image_only': 'Im. Comb.',
-    'audio_only': 'Audio Comb.',
-    'audio_only_nd': 'Audio w/o Delay',
+    'spectrum': 'Original\nOnly',
+    'image_only': 'Image\nComb.',
+    'audio_only': 'Audio\nComb.',
+    'audio_only_nd': 'Audio\nw/o Delay',
     'all': 'All Comb.'
 }
 
@@ -312,8 +312,8 @@ def build_boxplot(df, names=[], label=''):
     bpd = [df[name] for name in names]
     dpi = 512
     fig, ax = plt.subplots(figsize=(16, 8), dpi=dpi)
-    ax.tick_params(axis='x', labelsize=13)
-    ax.tick_params(axis='y', labelsize=13)
+    ax.tick_params(axis='x', labelsize=20)
+    ax.tick_params(axis='y', labelsize=20)
     bp = ax.boxplot(bpd, labels=[bp_names_lookup[n] for n in names],whis = [0,100], patch_artist=True,
                     meanline=True, showmeans=True, showfliers=True)
     for patch in bp['boxes']:
@@ -332,15 +332,15 @@ def build_boxplot(df, names=[], label=''):
         median.set(color='#D55B67',
                    linewidth=3)
 
-    fig.legend([bp['means'][0], bp['medians'][0]], ['Mean', 'Median'],bbox_to_anchor=(0.99,0.95))
+    fig.legend([bp['means'][0], bp['medians'][0]], ['Mean', 'Median'],bbox_to_anchor=(0.99,0.95), prop={'size': 18})
 
     buf = io.BytesIO()
     fig.set_tight_layout({"pad": .25})
     plt.xticks(rotation=0)
     plt.yticks(rotation=0)
     fig.savefig(
-        plot_directory+f"Box Plot for {label}.png", format="png", dpi=dpi, bbox_inches='tight')
-    ax.set_title(label, fontsize=18)
+        plot_directory+f"Box Plot for {label}.png", format="png", dpi=dpi, wrap = True)
+    ax.set_title(label, fontsize=24)
     fig.savefig(buf, format="png", dpi=dpi,
                 pad_inches=0, bbox_inches='tight')
     plt.close()
