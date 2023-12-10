@@ -1,10 +1,15 @@
+#This .py file contains all supporting functions that are used in ..ipynb notebooks.a3
+#Expect functions like plotting, audio processing, etc to be located here.
 from setup import *
+
 
 
 def plot_waveform(y, sr, label=None):
     """
     This function is used to build a Waveform view of the signal.
     Audio recording has to be provided as an array y, its samplerate is also required in order to calculate the time axis correctly.
+    y - the audio signal (array)
+    sr - the sampling rate
     """
     tick_freq = 3
     dpi = 256
@@ -96,6 +101,9 @@ def plot_room(room, markersize=100, img_order=0):
     """
     This is a slightly enhanced version of the plot_room function from pyroomacoustics library
     Here we can specify the aspect ratio of the plot and source and mic marker sizes.
+    room - the pyroomacoustics room object
+    markersize - the size of the markers for sources and microphones
+    img_order - somewhat of unclear parameter, but it affect placement of objects in the room
     """
     room_dim = [int(max(w)) for w in room.walls[0].corners]
     fig = plt.figure(figsize=(5, 4))
@@ -187,6 +195,10 @@ def plot_sample(y, sr, label="", include_audio=True):
     """
     This function is used to plot a waveform and spectrogram of a given audio signal.
     Used in motivation notebook to describe audio data in deep detail.
+    y - the audio signal (array)
+    sr - the sampling rate
+    label - the label of the spectrogram
+    include_audio - whether to include the audio file as well (for in-notebook previews)
     """
     fig, axs = plt.subplots(1, 2, figsize=(10, 8), dpi=224)
     axs[0].axis('off')
@@ -353,6 +365,9 @@ def build_boxplot(df, names=[], label=''):
 
 
 def summarize_table_to_latex(df, name):
+    """This function is used to summarize a metric table into a latex table.
+    A handy way to include it in a thesis. Is especially beneficial for bigger tables.
+    """
     t = df.copy()
     t = t[['spectrum','dist','mixup','room','delay','audio_only','audio_only_nd','imixup','warp','image_only', 'all']]
     mean = t.mean()

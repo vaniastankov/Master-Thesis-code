@@ -1,5 +1,7 @@
+#This .py file contains all of the imports and global variable definitions that are used throughout the project.
 import librosa
 import numpy as np
+from functools import partial
 import pandas as pd
 import matplotlib.pyplot as plt
 import io
@@ -20,12 +22,10 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn.metrics import precision_score, recall_score, f1_score
 import scipy.io.wavfile
 
-sr = 48000
-udb = (-120, 10)
-uflim = (20, 20000)
-# So you found an absolute path...
-plot_directory = "/Users/ivanstankov/Documents/Study/thesis_code/imgs/"
-
+sr = 48000 #Samplerate at which we will be working
+udb = (-120, 10) #Decibel range for the spectrogram generation
+uflim = (20, 20000) #Frequency range for the spectrogram generation
+plot_directory = "/Users/ivanstankov/Documents/Study/thesis_code/imgs/" #Directory where the plots will be saved
 
 def load_audio(path, sr):
     """
@@ -42,4 +42,5 @@ def save_audio(path, data, sr):
     """
     This function is used to save audio data into audio file.
     """
+    # Scipy is used instead of librosa because librosa has some issues with saving audio files.
     scipy.io.wavfile.write(path, sr, data)

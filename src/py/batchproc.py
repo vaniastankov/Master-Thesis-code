@@ -1,42 +1,15 @@
+# This .py file describes the application of augmentation techniques to the dataset.a3
+# In order to save time and utilize resources more efficiently, we use multiprocessing for this part.
+# Code from this file is used in the preprocesing notebook.
+
 from setup import *
 from augmenters import *
 from helpers import *
 
-# This file contains functions required for application of augmentations to the dataset in a multithreaded environment.
-
-
-def batch_spec(df):
-    """Application of spectorgram calculation to a dataframe sample"""
-    result = {}
-    for i, r in df.iterrows():
-        result.update({i: build_spec(
-            (r['y_s']), sr, mode="mel", num_filters=186, db=udb, flim=uflim, label=None)})
-    return result
-
-
-def batch_spec_dist(df):
-    """Application of spectorgram calculation and distortion effect to a dataframe sample"""
-    result = {}
-    for i, r in df.iterrows():
-        result.update({i: build_spec(bitcrusher_effect(
-            r['y_s']), sr, mode="mel", num_filters=186, db=udb, flim=uflim, label=None)})
-    return result
-
-
-def batch_spec_delay(df):
-    """Application of spectorgram calculation and delay effect to a dataframe sample"""
-    result = {}
-    for i, r in df.iterrows():
-        del_time = 0.25  # random.uniform(0.15, 0.4)
-        result.update({i: build_spec(simple_delay(r['y_s'], sr=sr, delay_time=del_time, fade=0.6,
-                      trim=False), sr, mode="mel", num_filters=186, db=udb, flim=uflim, label=None)})
-    return result
-
-
+#Room simulation parameters
 room_dim = [10, 10, 5]
 rt = 0.25
 e_absorption, max_order = pra.inverse_sabine(rt, room_dim)
-
 
 def simulate_room_augm(y, sr=sr, trim=False, max_order=max_order, tol=0.2):
     """ This function is similar to the one found in augmenters, with core difference being more efficient variable handling for multithraded application."""
@@ -50,92 +23,100 @@ def simulate_room_augm(y, sr=sr, trim=False, max_order=max_order, tol=0.2):
         return room.mic_array.signals[0, :][0:len(y)]
     else:
         n_l = min(len(room.mic_array.signals[0, :]), int((1+tol)*len(y)))
-        return room.mic_array.signals[0, :][0:len(y)]
+        return room.mic_array.signals[0, :][0:n_l]
 
 
-def batch_spec_warp(df):
-    """Application of spectorgram calculation and image warping effect to a dataframe sample"""
+def spc_wrap(y,sr):
+    """This function is used to wrap the spectrogram calculation function for multithreaded application."""
+    return build_spec(y, sr, mode="mel", num_filters=186, db=udb, flim=uflim, label=None)
+
+def batch_func_application(df, func_name):
+    """This function is used to apply augmentation function to a dataframe"""
     result = {}
-    for i, r in df.iterrows():
-        result.update({i: WarpImage_TPS(build_spec(
-            r['y_s'], sr, mode="mel", num_filters=186, db=udb, flim=uflim, label=None), strength=0.03)})
+    if func_name == "spectrogram":
+        for i, r in df.iterrows():
+            result.update({i: spc_wrap(r['y_s'],sr)})
+    elif func_name == "distortion":
+        for i, r in df.iterrows():
+            result.update({i: spc_wrap(bitcrusher_effect(r['y_s']), sr)})
+    elif func_name == "delay":
+        for i, r in df.iterrows():
+            result.update({i: spc_wrap(simple_delay(r['y_s'], sr=sr, delay_time=0.25, fade=0.6,
+            trim=False), sr)})
+    elif func_name == "warping":
+        for i, r in df.iterrows():
+            result.update({i: warp_img(spc_wrap(r['y_s'], sr), strength=0.03)})
+    elif func_name == "room":
+        for i, r in df.iterrows():
+            result.update({i: spc_wrap(simulate_room_augm(r['y_s'], sr=sr),sr)})
+    elif func_name == "audio_mixup":
+        for i, r in df.iterrows():
+            r2 = df[df.index != i].sample(1)
+            y_1 = r['y_s']
+            y_2 = r2.y_s.values[0]
+            l1 = r.classID
+            l2 = r2.classID.values[0]
+            y_res, l_res = audio_mixup(y_1, y_2, l1, l2, alpha=0.8)
+            result.update({i: [spc_wrap(y_res, sr), l2]})
+    elif func_name == "img_mixup":
+        for i, r in df.iterrows():
+            r2 = df[df.index != i].sample(1)
+            y_1 = r['y_s']
+            y_2 = r2.y_s.values[0]
+            l1 = r.classID
+            l2 = r2.classID.values[0]
+            y_res, l_res = audio_mixup(y_1, y_2, l1, l2, alpha=0.8)
+            result.update({i: [spc_wrap(y_res, sr), l2]})
+    else:
+        print("Wrong function name!")
+        return None
     return result
 
-
-def batch_spec_room(df):
-    """Application of spectorgram calculation and room simulation effect to a dataframe sample"""
-    result = {}
-    for i, r in df.iterrows():
-        len_r = len(r['y_s'])
-        result.update({i: build_spec(simulate_room_augm(r['y_s'], sr=sr),
-                                     sr, mode="mel", num_filters=186, db=udb, flim=uflim, label=None)})
-    return result
-
-
-def pcc(df, func, n_cores=16):
+def pcc(df, func_name, n_cores=16):
     """
     This function splits dataframe df into n_cores sub dataframes,
-    loads them to n_cores threads and applies func to every one.
+    loads them to n_cores threads and applies augmentation function with func_name to every piece.
     Sub datasets are then combined back into a whole dataframe.
     """
-    results = {}
-    pool = Pool(n_cores)
-    split = np.array_split(df.index.values, n_cores)
-    split_dfs = [df[df.index.isin(idx)] for idx in split]
-    res = pool.map(func, split_dfs)
-    for i in res:
-        if i != {}:
-            results.update(i)
-    pool.close()
-    pool.join()
-    return results
+    if func_name in ["spectrogram", "distortion", "delay", "warping", "room"]:
+        results = {}
+        pool = Pool(n_cores)
+        split = np.array_split(df.index.values, n_cores)
+        split_dfs = [df[df.index.isin(idx)] for idx in split]
+        partial_batch_func = partial(batch_func_application, func_name=func_name)
+        res = pool.map(partial_batch_func, split_dfs)
+        for i in res:
+            if i != {}:
+                results.update(i)
+        pool.close()
+        pool.join()
+        return results
+    else:
+        print("Plese use pcc_mixup function for this augmentation technique.")
+        return None
 
 
-def pcc_mixup(df, func):
+def pcc_mixup(df, func_name):
     """
     Similar to pcc, with some differences caused by how mixup technqies work. (In order to prevent target leak,
     Only samples from the same fold should be mixed together. Therefore subset spliting ttechnique is a bit different
     and n_cores is equal to number of folds.
     """
-    folds = df.fold.unique()
-    n_cores = len(folds)
-    results = {}
-    pool = Pool(n_cores)
-    split = np.array([df[df.fold == f].index.values for f in folds])
-    split_dfs = [df[df.index.isin(idx)] for idx in split]
-    res = pool.map(func, split_dfs)
-    for i in res:
-        if i != {}:
-            results.update(i)
-    pool.close()
-    pool.join()
-    return results
-
-
-def batch_spec_mixup(df):
-    """Application of spectorgram calculation and audio mixup effect to a dataframe sample"""
-    result = {}
-    for i, r in df.iterrows():
-        r2 = df[df.index != i].sample(1)
-        y_1 = r['y_s']
-        y_2 = r2.y_s.values[0]
-        l1 = r.classID
-        l2 = r2.classID.values[0]
-        y_res, l_res = audio_mixup(y_1, y_2, l1, l2, alpha=0.8)
-        result.update({i: [build_spec(y_res, sr, mode="mel",
-                      num_filters=186, db=udb, flim=uflim, label=None), l2]})
-    return result
-
-
-def batch_img_spec_mixup(df):
-    """Application of spectorgram calculation and image mixup effect to a dataframe sample"""
-    result = {}
-    for i, r in df.iterrows():
-        r2 = df[df.index != i].sample(1)
-        im1 = build_spec(r['y_s'], sr, mode="mel",
-                         num_filters=186, db=udb, flim=uflim, label=None)
-        im2 = build_spec(r2.y_s.values[0], sr, mode="mel",
-                         num_filters=186, db=udb, flim=uflim, label=None)
-        l2 = r2.classID.values[0]
-        result.update({i: [img_mixup(im1, im2, alpha=0.66), l2]})
-    return result
+    if func_name in ["audio_mixup","img_mixup"]:
+        folds = df.fold.unique()
+        n_cores = len(folds)
+        results = {}
+        pool = Pool(n_cores)
+        split = np.array([df[df.fold == f].index.values for f in folds])
+        split_dfs = [df[df.index.isin(idx)] for idx in split]
+        partial_batch_func = partial(batch_func_application, func_name=func_name)
+        res = pool.map(partial_batch_func, split_dfs)
+        for i in res:
+            if i != {}:
+                results.update(i)
+        pool.close()
+        pool.join()
+        return results
+    else:
+        print("Plese use pcc function for this augmentation technique.")
+        return None

@@ -1,13 +1,19 @@
+#This .py file contains definitions of individual augmentation techniques.
+#It relies on imports from setup.py and some helper functions from helpers.py
 from setup import *
 
-board = Pedalboard([Resample(target_sample_rate=14000),
-                    Bitcrush(bit_depth=8),
-                    Distortion(drive_db=20),
-                    Resample(target_sample_rate=sr)])
+#This is the pedalboard used for the "Heavy Distortion" effect
+board = Pedalboard([Resample(target_sample_rate=14000), #Samplerate reduction
+                    Bitcrush(bit_depth=8),              #Bitrate reduction
+                    Distortion(drive_db=20),            #Distortion
+                    Resample(target_sample_rate=sr)])   #Samplerate restoration
 
 
 def bitcrusher_effect(y, sr=sr):
-    """ Distortion effect"""
+    """ Distortion effect.
+    y - audio signal (array)
+    sr - sampling rate
+    """
     y_b = board(y, sr, reset=True)
     return y_b
 
@@ -15,7 +21,8 @@ def bitcrusher_effect(y, sr=sr):
 def simple_delay(y, sr=sr, delay_time=sr, fade=0.7, trim=True):
     """
     With this function we add the Delay effect, which is mixing original signal with its copies delayed in time.
-    y - loaded audio data;
+    y - audio signal (array)
+    sr - sampling rate
     delay_time - as a fraction of the original signal length
     fade - Amplitude of a delayed signal
     trim - if True, we trim the signal to the original length
@@ -38,11 +45,12 @@ def simple_delay(y, sr=sr, delay_time=sr, fade=0.7, trim=True):
 
 def audio_mixup(a, b, l1, l2, alpha=0.5):
     """ Audio Mixup effect
-    a - signal 1
-    b - signal 2
+    a - signal 1 (array)
+    b - signal 2 (array)
     l1 - label of signal 1
     l2 - label of singal 2
-    alpha - parameter to mix signals at"""
+    alpha - parameter to mix signals at
+    """
     if len(a) != len(b):
         if len(a) > len(b):
             b = np.pad(b, (0, len(a) - len(b)), 'constant')
@@ -53,16 +61,23 @@ def audio_mixup(a, b, l1, l2, alpha=0.5):
 
 
 def img_mixup(img1, img2, alpha=0.8):
+    """ Image Mixup effect
+    img1 - image 1 (RGB array)
+    img2 - image 2 (RGB array)
+    alpha - parameter to mix images at
+    """
     return (img1*alpha+img2*(1-alpha)).astype(np.uint8)
 
 
 def get_warping_points(im, strength=0.01):
     """
     This function is used to get the warping points for the TPS warping.
+    im - image to be warped
+    strength - parameter to control the strength of the warping effect
     """
     len_x = 224  # np.shape(im)[0]
     len_y = 224  # np.shape(im)[1]
-    move = int(strength*((len_x + len_y)/2))
+    move = int(strength*((len_x + len_y)/2)) #Amount of movement/displacement (in pixels) of the warping points
     mx = len(im[0])
     my = len(im)
     zp = np.array([[random.randint(0, int(mx/2)), random.randint(0, int(my/2))], [random.randint(0, int(mx/2)), random.randint(int(my/2), my)],
@@ -72,7 +87,7 @@ def get_warping_points(im, strength=0.01):
     return zp.reshape(-1, len(zp), 2), zs.reshape(-1, len(zs), 2)
 
 
-def WarpImage_TPS(img, strength=0.1):
+def warp_img(img, strength=0.1):
     """ Application of TPS warping to an image
     img - image to be warped
     strength - parameter to control the strength of the warping
@@ -89,7 +104,11 @@ def WarpImage_TPS(img, strength=0.1):
 
 
 def simulate_room(y, sr=sr, room_dim=[10, 20, 10], rt=1.5):
-    """Simulate room effect"""
+    """Simulate room effect
+    y - audio signal (array)
+    sr - sampling rate
+    room_dim - room dimensions
+    rt - reverberation time"""
     e_absorption, max_order = pra.inverse_sabine(rt, room_dim)
     room = pra.ShoeBox(
         room_dim, fs=8*sr, use_rand_ism=True, max_rand_disp=0.25, materials=pra.Material(e_absorption), max_order=max_order)
