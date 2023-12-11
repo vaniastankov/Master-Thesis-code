@@ -368,14 +368,9 @@ def summarize_table_to_latex(df, name):
     """This function is used to summarize a metric table into a latex table.
     A handy way to include it in a thesis. Is especially beneficial for bigger tables.
     """
-    t = df.copy()
-    t = t[['spectrum','dist','mixup','room','delay','audio_only','audio_only_nd','imixup','warp','image_only', 'all']]
-    mean = t.mean()
-    median = t.median()
-    std = t.std()
-    t = t.append(mean, ignore_index=True)
-    t = t.append(median, ignore_index=True)
-    t = t.append(std, ignore_index=True)
+    t = df[['spectrum','dist','mixup','room','delay','audio_only','audio_only_nd','imixup','warp','image_only', 'all']].copy()
+    stats = pd.concat([t.mean(), t.median(), t.std()], axis=1).T
+    t = pd.concat([t, stats], axis=0)
     t.rename(columns=bp_names_lookup, inplace=True)
     lt = t.to_latex(index=True, float_format="%.2f")
     with open("../Data/"+name+"_table.txt" ,'w') as f:
