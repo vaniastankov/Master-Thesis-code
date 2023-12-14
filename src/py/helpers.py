@@ -364,11 +364,11 @@ def build_boxplot(df, names=[], label=''):
     return img
 
 
-def summarize_table_to_latex(df, name):
+def summarize_table_to_latex(df, name, names = []):
     """This function is used to summarize a metric table into a latex table.
     A handy way to include it in a thesis. Is especially beneficial for bigger tables.
     """
-    t = df[['spectrum','dist','mixup','room','delay','audio_only','audio_only_nd','imixup','warp','image_only', 'all']].copy()
+    t = df[names].copy()
     stats = pd.concat([t.mean(), t.median(), t.std()], axis=1).T
     t = pd.concat([t, stats], axis=0)
     t.rename(columns=bp_names_lookup, inplace=True)
