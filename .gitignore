@@ -3,3 +3,5 @@ __pycache__
 Data/
 imgs/
 .ipynb_checkpoints
+lit/
+latex/
