@@ -25,18 +25,17 @@
 
 ## Summary
 
-In various machine learning and data science project, audio data stands aside a separate, yet understudied domain. Quite often one might come by a study that treats audio as image data without taking its specificity into consideration. As it is hard to label audio recordings, various data augmentation techniques are crucial in this domain, just like in others. However, research on this topic is limited. In this work multiple, supposedly most beneficial, audio data techniques are compared with each other and with few novel ones, which consider the nature of an audio signal.
+In various machine learning and data science projects, audio data stands aside as a separate yet understudied domain. Quite often, one might come across a study that treats audio as image data without taking its specificity into consideration. As it is hard to label audio recordings, various data augmentation techniques are crucial in this domain, just like in others. However, research on this topic is limited. In this work, multiple, supposedly most beneficial, audio data techniques are compared with each other and with a few novel ones, which consider the nature of an audio signal.
 
-**Keywords**: xxx (give at least 5 keywords / phrases).
+**Keywords**: Data Augmentation, Audio Data, Machine Learning, Audio Classification, Model Training.
 
-**Full text**: [include a link that points to the full text of your thesis]
-_Remark_: a thesis is about research. We believe in the [open science](https://en.wikipedia.org/wiki/Open_science) paradigm. Research results should be available to the public. Therefore, we expect dissertations to be shared publicly. Preferably, you publish your thesis via the [edoc-server of the Humboldt-Universität zu Berlin](https://edoc-info.hu-berlin.de/de/publizieren/andere). However, other sharing options, which ensure permanent availability, are also possible. <br> Exceptions from the default to share the full text of a thesis require the approval of the thesis supervisor.
+**Full text**: The full text for this work is available [here](https://edoc.hu-berlin.de/handle/18452/28837).
 
 ## Working with the repo
 
 ### Dependencies
 
-The project was built using Python 3.9.6. Nonetheless, there should be little to no problem in reproducing it on a different version.
+The project was built using Python 3.9.6. Nonetheless, there should be little to no problem in reproducing it with a different version.
 
 Code dependencies are stated in [requirements.txt](requirements.txt). All imports are managed in [setup.py](src/py/setup.py).
 
@@ -57,11 +56,16 @@ pip install -r requirements.txt
 
 In order to reproduce the results you should do the following:
 
-1. Upon cloning this repository, you should create a folder Data, in it you should place a copy of the [dataset](https://urbansounddataset.weebly.com/urbansound8k.html) used in this work.
-2. After that you can start experimenting with augmentation techniques and visualizations used in this work
+1. Upon cloning this repository, you should create a folder called Data. In it, you should place a copy of the [dataset](https://urbansounddataset.weebly.com/urbansound8k.html) used in this work.
 
-3. In order to train a model you can run [Models](src/Models.ipynb) Notebook. Note that in this work it was executed in Google Colab. In order to reuse it on your account, copy of the preprocessed dataset (which is built after running [Preprocessing](src/Preprocessing.ipynb)Notebook) has to be uploaded to your Google Drive and made accessible to the Notebook execution environment. Execution on alternative platforms and/or local machine should follow similar steps.
-4. As a result of executing [Models](src/Models.ipynb) Notebook you will obtain a pickled dataframe (for example, like [this](EfNetV2B1Res.pkl)) that stores true and predicted labels for each augmentation technique. The datafame looks as follows:
+
+2. After that, you can start experimenting with augmentation techniques and visualizations used in this work
+
+
+3. In order to train a model, you can run [Models](src/Models.ipynb) Notebook. Note that in this work it was executed in Google Colab. In order to reuse it on your account, a copy of the preprocessed dataset (which is built after running [Preprocessing](src/Preprocessing.ipynb)Notebook) has to be uploaded to your Google Drive and made accessible to the Notebook execution environment. Execution on alternative platforms and/or local machines should follow similar steps.
+
+4. As a result of executing [Models](src/Models.ipynb) Notebook, you will obtain a pickled dataframe (for example, like [this](EfNetV2B1Res.pkl)) that stores true and predicted labels for each augmentation technique. The datafame looks as follows:
+
 
 |    | slice_file_name   |   fold | class           | source   | dist             | mixup           | imixup          | room            | spectrum         | warp             | delay           | all             |
 |---:|:------------------|-------:|:----------------|:---------|:-----------------|:----------------|:----------------|:----------------|:-----------------|:-----------------|:----------------|:----------------|
@@ -81,7 +85,7 @@ The training code is provided as part of the [Models](src/Models.ipynb) Notebook
 
 ### Pretrained models
 
-Models used in this work can benefit from fine-tuning pretrained weights or built from scratch. In either case, there is no need to separately load weights, these can be downloaded automatically by a library used in this work. For more details see: [TensorFlow Docs](https://www.tensorflow.org/api_docs/python/tf/keras/applications).
+Models used in this work can benefit from fine-tuning pre-trained weights or built from scratch. In either case, there is no need to separately load weights, these can be downloaded automatically by a library used in this work. For more details, see:[TensorFlow Docs](https://www.tensorflow.org/api_docs/python/tf/keras/applications).
 
 ## Results
 
