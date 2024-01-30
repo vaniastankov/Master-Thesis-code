@@ -29,7 +29,7 @@ In various machine learning and data science projects, audio data stands aside a
 
 **Keywords**: Data Augmentation, Audio Data, Machine Learning, Audio Classification, Model Training.
 
-**Full text**: The full text for this work is available [here](https://edoc.hu-berlin.de/handle/18452/28837).
+**Full text**: The full text for this work is available [here](https://doi.org/10.18452/28010).
 
 ## Working with the repo
 
